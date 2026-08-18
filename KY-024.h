@@ -10,13 +10,5 @@ void setup_hall(int digital_pin) {
 }
 
 int read_hall() {
-  int digitalVal = digitalRead(ky24_do_pin);
-  // int analogVal = analogRead(AO_PIN);
-
-  // Serial.print("KY-024 Digital: .");
-  // Serial.println(digitalVal);
-  // Serial.print(" | Analog: ");
-  // Serial.println(analogVal);
-  
-  delay(500);
+  return digitalRead(ky24_do_pin);
 }

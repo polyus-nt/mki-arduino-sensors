@@ -12,11 +12,6 @@ void setup_gerkon(int pin) {
 
 int read_gerkon(int pin) {
   int analogVal = analogRead(pin);
-
-  // Serial.print("KY-025 Digital: ");
-  // Serial.println(digitalVal);
-  Serial.print("Gerkon Analog: ");
-  Serial.println(analogVal);
   if (analogVal > 10) return 0;
   else return 1;
   // return digitalVal;

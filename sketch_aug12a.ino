@@ -6,7 +6,6 @@
 
 #include "AustereSerialMaster.h"
 #include "./Led.h"
-#include "./KY-001.h"
 #include "./DS18B20.h"
 #include "./KY-024.h"
 #include "./KY-025.h"
@@ -18,10 +17,8 @@
 #define KY021_D0_PIN 10
 
 
-#include <OneWire.h>
-
-OneWire ds(8);
-DS18B20 ds18b20(9);
+DS18B20 insideTemperatureSensor(8);
+DS18B20 outsideTemperatureSensor(9);
 
 // Pick any digital pins per spec.
 static const uint8_t PIN_MISO = 2;
@@ -73,7 +70,8 @@ void sendTemperature(float value) {
 
 void setup() {
   Serial.begin(9600);
-  ds18b20.setup();
+  insideTemperatureSensor.setup();
+  outsideTemperatureSensor.setup();
   link.setup();
   Serial.println("AustereSerialMaster ready");
   setup_gerkon(KY025_DO_PIN);
@@ -99,15 +97,12 @@ void do_numbers() {
   while (link.recvByte(&b)) {
     if (b == POLLING_CODE) {
       // опрос всех датчиков
-      temperature = read_temperature(25, ds);
-      temperature2 = ds18b20.readTemperature();
+      temperature = insideTemperatureSensor.readTemperature();
+      temperature2 = outsideTemperatureSensor.readTemperature();
       hall_value = read_hall();
       gerkon_values[0] = read_gerkon(A0);
       gerkon_values[1] = read_gerkon(A1);
       gerkon_values[2] = read_gerkon_ky_021(KY021_D0_PIN);
-      Serial.println(gerkon_values[0]);
-      Serial.println(gerkon_values[1]);
-      Serial.println(gerkon_values[2]);
       // после опроса отправляем ok
       link.sendByte(OK_CODE);
     }

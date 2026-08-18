@@ -1,24 +1,27 @@
 // Плата ардуино, которая получает данные с 
 // Датчик температуры KY-001
-// Датчик температуры и влажности DHT11
+// Датчик температуры Dallas DS18B20
 // Датчик Холла KY-024
 // Датчик Геркона KY-025
 
 #include "AustereSerialMaster.h"
 #include "./Led.h"
 #include "./KY-001.h"
-#include "./DH-11.h"
+#include "./DS18B20.h"
 #include "./KY-024.h"
 #include "./KY-025.h"
+#include "./KY-021.h"
 
 #define KY024_DO_PIN 12 
 #define KY025_DO_PIN 13
+#define KY025_AO_PIN A1
+#define KY021_D0_PIN 10
 
 
 #include <OneWire.h>
 
 OneWire ds(8);
-DH11 dht11(11);
+DS18B20 ds18b20(9);
 
 // Pick any digital pins per spec.
 static const uint8_t PIN_MISO = 2;
@@ -44,7 +47,7 @@ static const LED led = LED(8);
 float temperature = 0;
 float temperature2 = 0;
 int hall_value = 0;
-int gerkon_value = 0;
+int gerkon_values[3] = { 0, 0, 0 };
 
 // Format: [int8_t whole part][uint8_t fraction normalized to 0..255].
 // The fraction represents hundredths of a degree (0..99).
@@ -70,10 +73,12 @@ void sendTemperature(float value) {
 
 void setup() {
   Serial.begin(9600);
-  dht11.setup();
+  ds18b20.setup();
   link.setup();
   Serial.println("AustereSerialMaster ready");
   setup_gerkon(KY025_DO_PIN);
+  setup_gerkon(KY025_AO_PIN);
+  setup_gerkon_ky_021(KY021_D0_PIN);
   setup_hall(KY024_DO_PIN);
 
   Serial.println("Датчики ready");
@@ -95,16 +100,23 @@ void do_numbers() {
     if (b == POLLING_CODE) {
       // опрос всех датчиков
       temperature = read_temperature(25, ds);
-      temperature2 = dht11.readTemperature();
+      temperature2 = ds18b20.readTemperature();
       hall_value = read_hall();
-      gerkon_value = read_gerkon(A0);
+      gerkon_values[0] = read_gerkon(A0);
+      gerkon_values[1] = read_gerkon(A1);
+      gerkon_values[2] = read_gerkon_ky_021(KY021_D0_PIN);
+      Serial.println(gerkon_values[0]);
+      Serial.println(gerkon_values[1]);
+      Serial.println(gerkon_values[2]);
       // после опроса отправляем ok
       link.sendByte(OK_CODE);
     }
     if (b == SEND_CODE) {
       // отправляем результаты счетчиков
       link.sendByte(hall_value);
-      link.sendByte(gerkon_value);
+      link.sendByte(gerkon_values[0]);
+      link.sendByte(gerkon_values[1]);
+      link.sendByte(gerkon_values[2]);
       sendTemperature(temperature);
       sendTemperature(temperature2);
       link.sendByte(OK_CODE);

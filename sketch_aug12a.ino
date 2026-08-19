@@ -17,8 +17,8 @@
 #define KY021_D0_PIN 10
 
 
-DS18B20 insideTemperatureSensor(8);
-DS18B20 outsideTemperatureSensor(9);
+DS18B20 insideTemperatureSensor(A3);
+DS18B20 outsideTemperatureSensor(A4);
 
 // Pick any digital pins per spec.
 static const uint8_t PIN_MISO = 2;
@@ -40,7 +40,6 @@ static const uint8_t OK_CODE = 3;
 static const uint8_t SEND_CODE = 4;
 
 
-static const LED led = LED(8);
 float temperature = 0;
 float temperature2 = 0;
 int hall_value = 0;
@@ -74,9 +73,9 @@ void setup() {
   outsideTemperatureSensor.setup();
   link.setup();
   Serial.println("AustereSerialMaster ready");
-  setup_gerkon(KY025_DO_PIN);
-  setup_gerkon(KY025_AO_PIN);
-  setup_gerkon_ky_021(KY021_D0_PIN);
+  setup_gerkon(A0);
+  setup_gerkon(A1);
+  setup_gerkon_ky_021(A2);
   setup_hall(KY024_DO_PIN);
 
   Serial.println("Датчики ready");
@@ -100,9 +99,9 @@ void do_numbers() {
       temperature = insideTemperatureSensor.readTemperature();
       temperature2 = outsideTemperatureSensor.readTemperature();
       hall_value = read_hall();
-      gerkon_values[0] = read_gerkon(A0);
-      gerkon_values[1] = read_gerkon(A1);
-      gerkon_values[2] = read_gerkon_ky_021(KY021_D0_PIN);
+      gerkon_values[0] = read_gerkon(A1);
+      gerkon_values[1] = read_gerkon(A2);
+      gerkon_values[2] = read_gerkon_ky_021(A0);
       // после опроса отправляем ok
       link.sendByte(OK_CODE);
     }
@@ -118,7 +117,7 @@ void do_numbers() {
     }
     if (b == ACTUATOR_CODE) {
       // зажечь светодиод, уйдет на плату-актуатор
-      led.toggle();
+      // led.toggle();
       link.sendByte(OK_CODE);
     }
   }

@@ -8,13 +8,12 @@
 #include "./Led.h"
 #include "./DS18B20.h"
 #include "./KY-024.h"
-#include "./KY-025.h"
-#include "./KY-021.h"
+#include "./Koltsevik.h"
 
 #define KY024_DO_PIN 12 
-#define KY025_DO_PIN 13
-#define KY025_AO_PIN A1
-#define KY021_D0_PIN 10
+static const uint8_t LIMIT_SWITCH_0_PIN = A0;
+static const uint8_t LIMIT_SWITCH_1_PIN = A1;
+static const uint8_t LIMIT_SWITCH_2_PIN = A2;
 
 
 DS18B20 insideTemperatureSensor(A3);
@@ -43,7 +42,11 @@ static const uint8_t SEND_CODE = 4;
 float temperature = 0;
 float temperature2 = 0;
 int hall_value = 0;
-int gerkon_values[3] = { 0, 0, 0 };
+int limit_switch_values[3] = { 0, 0, 0 };
+
+Koltsevik limitSwitch0(LIMIT_SWITCH_0_PIN);
+Koltsevik limitSwitch1(LIMIT_SWITCH_1_PIN);
+Koltsevik limitSwitch2(LIMIT_SWITCH_2_PIN);
 
 // Format: [int8_t whole part][uint8_t fraction normalized to 0..255].
 // The fraction represents hundredths of a degree (0..99).
@@ -73,9 +76,9 @@ void setup() {
   outsideTemperatureSensor.setup();
   link.setup();
   Serial.println("AustereSerialMaster ready");
-  setup_gerkon(A0);
-  setup_gerkon(A1);
-  setup_gerkon_ky_021(A2);
+  limitSwitch0.begin();
+  limitSwitch1.begin();
+  limitSwitch2.begin();
   setup_hall(KY024_DO_PIN);
 
   Serial.println("Датчики ready");
@@ -99,18 +102,18 @@ void do_numbers() {
       temperature = insideTemperatureSensor.readTemperature();
       temperature2 = outsideTemperatureSensor.readTemperature();
       hall_value = read_hall();
-      gerkon_values[0] = read_gerkon(A1);
-      gerkon_values[1] = read_gerkon(A2);
-      gerkon_values[2] = read_gerkon_ky_021(A0);
+      limit_switch_values[0] = limitSwitch1.read();
+      limit_switch_values[1] = limitSwitch2.read();
+      limit_switch_values[2] = limitSwitch0.read();
       // после опроса отправляем ok
       link.sendByte(OK_CODE);
     }
     if (b == SEND_CODE) {
       // отправляем результаты счетчиков
       link.sendByte(hall_value);
-      link.sendByte(gerkon_values[0]);
-      link.sendByte(gerkon_values[1]);
-      link.sendByte(gerkon_values[2]);
+      link.sendByte(limit_switch_values[0]);
+      link.sendByte(limit_switch_values[1]);
+      link.sendByte(limit_switch_values[2]);
       sendTemperature(temperature);
       sendTemperature(temperature2);
       link.sendByte(OK_CODE);

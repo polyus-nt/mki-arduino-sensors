@@ -56,6 +56,13 @@ class DS18B20 {
     return lastTemperature_;
   }
 
+  // Checks whether a DS18B20 is currently visible on the OneWire bus.
+  // Intended for diagnostics; normal measurements use readTemperature().
+  bool isConnected() {
+    found_ = findSensor();
+    return found_;
+  }
+
  private:
   static const unsigned long CONVERSION_TIME_MS = 750UL;
 

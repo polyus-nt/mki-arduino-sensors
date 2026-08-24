@@ -10,7 +10,8 @@
 #include "./KY-024.h"
 #include "./Koltsevik.h"
 
-#define KY024_DO_PIN 12 
+#define KY024_DO_PIN 12
+#define DEBUG false
 static const uint8_t LIMIT_SWITCH_0_PIN = A0;
 static const uint8_t LIMIT_SWITCH_1_PIN = A1;
 static const uint8_t LIMIT_SWITCH_2_PIN = A2;
@@ -47,6 +48,59 @@ int limit_switch_values[3] = { 0, 0, 0 };
 Koltsevik limitSwitch0(LIMIT_SWITCH_0_PIN);
 Koltsevik limitSwitch1(LIMIT_SWITCH_1_PIN);
 Koltsevik limitSwitch2(LIMIT_SWITCH_2_PIN);
+
+void printLinkByteForTest(uint8_t byteValue);
+
+// USB Serial diagnostic. Call it from loop() while testing the wiring.
+// It does not send anything through link and does not change its protocol.
+void testSensorsAndLink() {
+  uint8_t byteValue;
+  while (link.recvByte(&byteValue)) {
+    printLinkByteForTest(byteValue);
+  }
+
+  static uint32_t lastTestMs = 0;
+  const uint32_t now = millis();
+  if (now - lastTestMs < 2000UL) {
+    return;
+  }
+  lastTestMs = now;
+
+  const bool insideConnected = insideTemperatureSensor.isConnected();
+  const bool outsideConnected = outsideTemperatureSensor.isConnected();
+  const float insideTemperature = insideTemperatureSensor.readTemperature();
+  const float outsideTemperature = outsideTemperatureSensor.readTemperature();
+
+  Serial.println(F("--- Sensor test ---"));
+  Serial.print(F("DS18B20 inside: "));
+  Serial.print(insideConnected ? F("OK, ") : F("NOT FOUND, "));
+  Serial.println(insideTemperature, 2);
+  Serial.print(F("DS18B20 outside: "));
+  Serial.print(outsideConnected ? F("OK, ") : F("NOT FOUND, "));
+  Serial.println(outsideTemperature, 2);
+  Serial.print(F("Hall (D12): "));
+  Serial.println(read_hall());
+  Serial.print(F("Limit switches raw/state A0, A1, A2: "));
+  Serial.print(limitSwitch0.rawValue());
+  Serial.print('/');
+  Serial.print(limitSwitch0.read());
+  Serial.print(F(", "));
+  Serial.print(limitSwitch1.rawValue());
+  Serial.print('/');
+  Serial.print(limitSwitch1.read());
+  Serial.print(F(", "));
+  Serial.print(limitSwitch2.rawValue());
+  Serial.print('/');
+  Serial.println(limitSwitch2.read());
+}
+
+void printLinkByteForTest(uint8_t byteValue) {
+  Serial.print(F("Link RX: 0x"));
+  if (byteValue < 0x10) {
+    Serial.print('0');
+  }
+  Serial.println(byteValue, HEX);
+}
 
 // Format: [int8_t whole part][uint8_t fraction normalized to 0..255].
 // The fraction represents hundredths of a degree (0..99).
@@ -97,6 +151,7 @@ void do_numbers() {
   // Drain received bytes.
   uint8_t b;
   while (link.recvByte(&b)) {
+    // printLinkByteForTest(b);
     if (b == POLLING_CODE) {
       // опрос всех датчиков
       temperature = insideTemperatureSensor.readTemperature();
@@ -129,5 +184,9 @@ void do_numbers() {
 // 0d 46 46 fe 0a 0d
 
 void loop() {
-  do_numbers();
+  if (DEBUG) {
+    testSensorsAndLink();
+  } else {
+    do_numbers();
+  }
 }

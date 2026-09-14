@@ -5,10 +5,10 @@
 // Датчик Геркона KY-025
 
 #include "AustereSerialMaster.h"
-#include "./Led.h"
 #include "./DS18B20.h"
 #include "./KY-024.h"
 #include "./Koltsevik.h"
+#include "./SensorProtocol.h"
 
 #define KY024_DO_PIN 12
 #define DEBUG false
@@ -42,6 +42,7 @@ static const uint8_t SEND_CODE = 4;
 
 float temperature = 0;
 float temperature2 = 0;
+uint8_t temperature_status = 0;
 int hall_value = 0;
 int limit_switch_values[3] = { 0, 0, 0 };
 
@@ -105,23 +106,10 @@ void printLinkByteForTest(uint8_t byteValue) {
 // Format: [int8_t whole part][uint8_t fraction normalized to 0..255].
 // The fraction represents hundredths of a degree (0..99).
 void sendTemperature(float value) {
-  value = constrain(value, -128.0f, 127.99f);
-
-  // floorf preserves the sign for values between -1.00 and 0.00.
-  int8_t wholePart = (int8_t)floorf(value);
-  uint8_t hundredths = (uint8_t)lroundf((value - wholePart) * 100.0f);
-
-  // For example, 23.999 becomes 24.00 after rounding to hundredths.
-  if (hundredths == 100) {
-    wholePart++;
-    hundredths = 0;
-  }
-
-  const uint8_t normalizedFraction =
-      (uint8_t)lroundf((float)hundredths * 255.0f / 99.0f);
-
-  link.sendByte((uint8_t)wholePart);
-  link.sendByte(normalizedFraction);
+  const sensor_protocol::EncodedTemperature encoded =
+      sensor_protocol::encodeTemperature(value);
+  link.sendByte(encoded.whole);
+  link.sendByte(encoded.fraction);
 }
 
 void setup() {
@@ -154,8 +142,12 @@ void do_numbers() {
     // printLinkByteForTest(b);
     if (b == POLLING_CODE) {
       // опрос всех датчиков
-      temperature = insideTemperatureSensor.readTemperature();
-      temperature2 = outsideTemperatureSensor.readTemperature();
+      const DS18B20::Reading inside = insideTemperatureSensor.read();
+      const DS18B20::Reading outside = outsideTemperatureSensor.read();
+      temperature = inside.value;
+      temperature2 = outside.value;
+      temperature_status = sensor_protocol::sensorFlags(
+          inside.valid, inside.fresh, outside.valid, outside.fresh);
       hall_value = read_hall();
       limit_switch_values[0] = limitSwitch1.read();
       limit_switch_values[1] = limitSwitch2.read();
@@ -171,11 +163,11 @@ void do_numbers() {
       link.sendByte(limit_switch_values[2]);
       sendTemperature(temperature);
       sendTemperature(temperature2);
+      link.sendByte(temperature_status);
       link.sendByte(OK_CODE);
     }
     if (b == ACTUATOR_CODE) {
-      // зажечь светодиод, уйдет на плату-актуатор
-      // led.toggle();
+      // Reserved legacy command; it has no effect on sensor wiring.
       link.sendByte(OK_CODE);
     }
   }

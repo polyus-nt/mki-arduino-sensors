@@ -2,13 +2,19 @@
 
 #include <Arduino.h>
 #include <OneWire.h>
+#include "TemperatureReadingState.h"
 
 // Датчик температуры Dallas DS18B20.
 class DS18B20 {
  public:
+  struct Reading {
+    float value;
+    bool valid;
+    bool fresh;
+  };
+
   explicit DS18B20(uint8_t pin)
       : wire_(pin),
-        lastTemperature_(0.0f),
         conversionStartedMs_(0),
         found_(false),
         conversionStarted_(false) {}
@@ -27,33 +33,34 @@ class DS18B20 {
   // Измерение занимает до 750 мс, но этот метод не блокирует скетч:
   // пока измерение не готово, возвращается последнее значение.
   float readTemperature() {
+    return read().value;
+  }
+
+  // Возвращает значение вместе с признаками валидности и свежести.
+  // fresh=true только после нового успешного чтения scratchpad с верным CRC.
+  Reading read() {
     if (!found_) {
       if (!findSensor()) {
-        return lastTemperature_;
+        return state_.retained();
       }
       startConversion();
-      return lastTemperature_;
+      return state_.retained();
     }
 
     if (!conversionStarted_) {
       startConversion();
-      return lastTemperature_;
+      return state_.retained();
     }
 
     if (millis() - conversionStartedMs_ < CONVERSION_TIME_MS) {
-      return lastTemperature_;
+      return state_.retained();
     }
 
     float temperature;
     const bool readSucceeded = readCompletedTemperature(temperature);
     startConversion();
 
-    if (!readSucceeded) {
-      return lastTemperature_;
-    }
-
-    lastTemperature_ = temperature;
-    return lastTemperature_;
+    return state_.complete(readSucceeded, temperature);
   }
 
   // Checks whether a DS18B20 is currently visible on the OneWire bus.
@@ -115,7 +122,7 @@ class DS18B20 {
 
   OneWire wire_;
   byte address_[8];
-  float lastTemperature_;
+  TemperatureReadingState state_;
   unsigned long conversionStartedMs_;
   bool found_;
   bool conversionStarted_;

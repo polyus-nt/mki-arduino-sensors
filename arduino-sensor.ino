@@ -1,7 +1,8 @@
 #include <Arduino.h>
-#include <AustereSerialMaster.h>
-#include "BoardIO.h"
-#include "LinkPins.h"
+#include "BoardConfig.h"
+#include "src/austere/AustereSerialMaster.h"
+#include "src/BoardIO.h"
+#include "src/LinkPins.h"
 
 BoardIO board;
 hardware_api::SensorApi api(board);
@@ -25,12 +26,17 @@ void loop() {
     lastOverruns = link.overrunCount(); parser.reset(); link.clearRx();
     Serial.println(F("Austere RX overflow: partial request discarded"));
   }
+  bool receivedByte = false;
   if (!replies.pending()) {
     uint8_t byte;
     hardware_api::Frame request;
-    if (link.recvByte(&byte) && parser.feed(byte, millis(), request) &&
-        request.kind == hardware_api::kRequest)
-      replies.enqueue(api.handle(request));
+    if (link.recvByte(&byte)) {
+      receivedByte = true;
+      if (parser.feed(byte, millis(), request) && request.kind == hardware_api::kRequest)
+        replies.enqueue(api.handle(request));
+    }
   }
   if (replies.pending() && link.sendByte(replies.nextByte())) replies.accepted();
+  // Service the transport first. One BMP register operation only in an idle iteration.
+  if (!receivedByte && !replies.pending()) board.poll(millis());
 }

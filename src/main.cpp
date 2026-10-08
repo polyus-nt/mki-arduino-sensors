@@ -1,4 +1,4 @@
-#ifdef ARDUINO
-#include <Arduino.h>
-#include "../sketch_aug12a.ino"
+#if defined(ARDUINO) && defined(PLATFORMIO)
+// PlatformIO wrapper only. Arduino IDE builds the root .ino itself.
+#include "../arduino-sensor.ino"
 #endif

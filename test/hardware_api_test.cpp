@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
-#include "../firmware/SensorApi.h"
+#include "../src/SensorApi.h"
 using namespace hardware_api;
 struct Hardware : SensorHardware {
   unsigned reads = 0;

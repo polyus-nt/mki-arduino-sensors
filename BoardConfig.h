@@ -64,6 +64,16 @@
 #ifndef API_DOOR1_CLOSED_LEVEL
 #define API_DOOR1_CLOSED_LEVEL LOW
 #endif
-// DHT11 x3 и GP2Y1010AU0F x2 пока не подключены к API. Их классы-заглушки
-// не трогают GPIO; реальных пинов в драйверах нет. После согласования карты
-// добавляем сюда настройки их входов и LED-управления, не в класс датчика.
+// DHT11 x3: пины из примера 8/9/10 НЕ включены автоматически — в тестовой
+// карте SGP40 они уже заняты. Каждый вход уникален во всей карте.
+// #define API_DHT0_PIN 8
+// #define API_DHT1_PIN 9
+// #define API_DHT2_PIN 10
+#if defined(API_DHT0_PIN) || defined(API_DHT1_PIN) || defined(API_DHT2_PIN)
+#if !defined(API_DHT0_PIN) || !defined(API_DHT1_PIN) || !defined(API_DHT2_PIN)
+#error "define all three DHT11 pins"
+#endif
+#define API_DHT_CONFIGURED
+#endif
+// GP2Y1010AU0F x2 пока заглушки. После согласования карты добавляем настройки
+// их входов и LED-управления сюда, не в класс датчика.

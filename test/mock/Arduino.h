@@ -1,6 +1,21 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <cmath>
+#include <cstdlib>
+using word = uint16_t;
+#define microsecondsToClockCycles(value) ((value) * 16UL)
+#ifndef LOW
+#define LOW 0
+#define HIGH 1
+#define INPUT_PULLUP 2
+#endif
+#define OUTPUT 1
+void pinMode(int pin, int mode);
+void digitalWrite(int pin, int value);
+int digitalRead(int pin);
+void noInterrupts();
+void interrupts();
 using boolean = bool;
 #define F_CPU 16000000UL
 #define F(value) value

@@ -37,6 +37,6 @@ void loop() {
     }
   }
   if (replies.pending() && link.sendByte(replies.nextByte())) replies.accepted();
-  // Service the transport first. One BMP register operation only in an idle iteration.
+  // Сначала транспорт, затем максимум одна I²C-операция BMP280/SGP40 в idle-итерации.
   if (!receivedByte && !replies.pending()) board.poll(millis());
 }

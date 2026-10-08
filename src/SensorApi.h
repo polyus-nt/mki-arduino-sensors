@@ -13,7 +13,9 @@ class SensorHardware {
   virtual Status temperature(uint8_t idx, Measurement& result) = 0;
   virtual Status pressure(uint8_t idx, Measurement& result) = 0;
   virtual Status door(uint8_t idx, bool& closed) = 0;
-  // Units for VOC/humidity/dust must be settled before returning numeric success.
+  // Безразмерный VOC Index Sensirion 1..500: не ppm и не сырой SRAW.
+  virtual Status voc(uint8_t, Measurement&) { return NOT_IMPLEMENTED; }
+  // Units for humidity/dust must be settled before returning numeric success.
   virtual Status unsupported(uint8_t command, uint8_t idx) = 0;
 };
 class SensorApi {
@@ -28,12 +30,16 @@ class SensorApi {
       bool closed = false;
       status = hardware_.door(request.idx, closed);
       if (status == OK) reply.data[0] = closed ? 1 : 0;
-    } else if (request.command == kGetTemp || request.command == kGetPressure) {
+    } else if (request.command == kGetTemp || request.command == kGetPressure || request.command == kGetVoc) {
       Measurement measurement = {};
       status = request.command == kGetTemp
           ? hardware_.temperature(request.idx, measurement)
-          : hardware_.pressure(request.idx, measurement);
+          : request.command == kGetPressure ? hardware_.pressure(request.idx, measurement)
+          : hardware_.voc(request.idx, measurement);
       if (status == OK) {
+        // Ноль blackout и raw/ppm не должны попасть в успешный ответ GET_VOC.
+        if (request.command == kGetVoc && (measurement.value < 1 || measurement.value > 500))
+          return response(request, INTERNAL_ERROR);
         if ((measurement.flags != 1 && measurement.flags != 3) ||
             measurement.ageMs > 65534) return response(request, INTERNAL_ERROR);
         writeU32(reply.data, measurement.value);

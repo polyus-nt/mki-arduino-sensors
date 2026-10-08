@@ -37,6 +37,6 @@ void loop() {
     }
   }
   if (replies.pending() && link.sendByte(replies.nextByte())) replies.accepted();
-  // Сначала транспорт, затем опрос максимум одного BMP280/SGP40/DHT11 в idle-итерации.
+  // Сначала транспорт, затем один BMP280/SGP40/DHT11/GP2Y в idle-итерации.
   if (!receivedByte && !replies.pending()) board.poll(millis());
 }

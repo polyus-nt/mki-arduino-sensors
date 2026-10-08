@@ -11,6 +11,10 @@ using word = uint16_t;
 #define INPUT_PULLUP 2
 #endif
 #define OUTPUT 1
+#ifndef INPUT
+#define INPUT 0
+#endif
+int analogRead(int pin);
 void pinMode(int pin, int mode);
 void digitalWrite(int pin, int value);
 int digitalRead(int pin);

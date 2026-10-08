@@ -75,5 +75,21 @@
 #endif
 #define API_DHT_CONFIGURED
 #endif
-// GP2Y1010AU0F x2 пока заглушки. После согласования карты добавляем настройки
-// их входов и LED-управления сюда, не в класс датчика.
+// GP2Y1010AU0F x2: для каждого LED active LOW и аналоговый вход.
+// D2 из примера занят Austere! Карта по умолчанию выключена.
+// #define API_DUST0_LED_PIN ...
+// #define API_DUST0_ANALOG_PIN A0
+// #define API_DUST1_LED_PIN ...
+// #define API_DUST1_ANALOG_PIN A1
+#ifndef API_DUST_REFERENCE_MV
+#define API_DUST_REFERENCE_MV 5000
+#endif
+#if API_DUST_REFERENCE_MV < 1 || API_DUST_REFERENCE_MV > 65535
+#error "ADC reference must be 1..65535 millivolts"
+#endif
+#if defined(API_DUST0_LED_PIN) || defined(API_DUST0_ANALOG_PIN) || defined(API_DUST1_LED_PIN) || defined(API_DUST1_ANALOG_PIN)
+#if !defined(API_DUST0_LED_PIN) || !defined(API_DUST0_ANALOG_PIN) || !defined(API_DUST1_LED_PIN) || !defined(API_DUST1_ANALOG_PIN)
+#error "define all four GP2Y1010AU0F pins"
+#endif
+#define API_DUST_CONFIGURED
+#endif

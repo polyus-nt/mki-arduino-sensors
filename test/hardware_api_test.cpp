@@ -19,7 +19,7 @@ struct Hardware : SensorHardware {
   Status unsupported(uint8_t, uint8_t) override { ++reads; return NOT_IMPLEMENTED; }
 };
 static Frame request(uint8_t command, uint8_t idx) {
-  Frame frame = {}; frame.version = 1; frame.kind = 1; frame.tx_id = 100;
+  Frame frame = {}; frame.version = hardware_api::kVersion; frame.kind = 1; frame.tx_id = 100;
   frame.node = 13; frame.command = command; frame.idx = idx; return frame;
 }
 int main() {

@@ -79,7 +79,7 @@ int main() {
   assert(!stable.read(50*1005+35).fresh);
   Hardware hardware; hardware_api::SensorApi api(hardware);
   hardware_api::Frame request = {};
-  request.version=1; request.kind=1; request.node=13; request.command=hardware_api::kGetVoc;
+  request.version = hardware_api::kVersion; request.kind=1; request.node=13; request.command=hardware_api::kGetVoc;
   for(uint8_t idx=0;idx<2;++idx) {
     request.idx=idx; auto reply=api.handle(request);
     assert(reply.status==hardware_api::OK && hardware_api::readU32(reply.data)==100U+idx);

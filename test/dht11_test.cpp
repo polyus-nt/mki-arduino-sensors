@@ -50,7 +50,7 @@ int main() {
   assert(wrapped.read(1754).ageMs == 10);
   Hardware hardware; hardware_api::SensorApi api(hardware);
   hardware_api::Frame request = {};
-  request.version = 1; request.kind = 1; request.node = 13; request.command = hardware_api::kGetHumidity;
+  request.version = hardware_api::kVersion; request.kind = 1; request.node = 13; request.command = hardware_api::kGetHumidity;
   for (uint8_t idx = 0; idx < 3; ++idx) {
     request.idx = idx; auto reply = api.handle(request);
     assert(reply.status == hardware_api::OK && hardware_api::readU32(reply.data) == 5550U + idx);

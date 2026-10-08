@@ -6,6 +6,10 @@
 #include "../SGP40.h"
 #include "../DoorSwitch.h"
 #include "../DHT11.h"
+#include "../GP2Y1010AU0F.h"
+#ifdef API_DUST_CONFIGURED
+#include "GP2Y1010Hardware.h"
+#endif
 
 #ifdef API_BMP_CONFIGURED
 #include "BMP280SoftwareBus.h"
@@ -19,7 +23,7 @@
 
 class BoardIO : public hardware_api::SensorHardware {
  public:
-  BoardIO() : doorsReady_(false), bmpReady_(false), vocReady_(false), dhtReady_(false), nextSensor_(0)
+  BoardIO() : doorsReady_(false), bmpReady_(false), vocReady_(false), dhtReady_(false), dustReady_(false), nextSensor_(0)
 #ifdef API_BMP_CONFIGURED
       , buses_{{API_BMP_SDA0_PIN, API_BMP_SCL_PIN},
                {API_BMP_SDA1_PIN, API_BMP_SCL_PIN},
@@ -32,16 +36,25 @@ class BoardIO : public hardware_api::SensorHardware {
 #ifdef API_DHT_CONFIGURED
       , dhtReaders_{DHT11Hardware(API_DHT0_PIN), DHT11Hardware(API_DHT1_PIN), DHT11Hardware(API_DHT2_PIN)}
 #endif
+#ifdef API_DUST_CONFIGURED
+      , dustReaders_{GP2Y1010Hardware(API_DUST0_LED_PIN, API_DUST0_ANALOG_PIN),
+                     GP2Y1010Hardware(API_DUST1_LED_PIN, API_DUST1_ANALOG_PIN)}
+#endif
   {}
   void setup() {
-    doorsReady_ = bmpReady_ = vocReady_ = dhtReady_ = false; nextSensor_ = 0;
+    doorsReady_ = bmpReady_ = vocReady_ = dhtReady_ = dustReady_ = false; nextSensor_ = 0;
     for (uint8_t i = 0; i < 3; ++i) bmp_[i].setup(millis());
     for (uint8_t i = 0; i < 3; ++i) dht_[i].setup(millis());
     for (uint8_t i = 0; i < 2; ++i) voc_[i].setup(millis());
+    for (uint8_t i = 0; i < 2; ++i) dust_[i].setup(millis());
     // Check all pins before touching any: no overlap with the transport.
     const int pins[2] = {API_DOOR0_PIN, API_DOOR1_PIN};
     const int transport[5] = {API_LINK_MISO, API_LINK_MOSI, API_LINK_CLK,
                              API_LINK_CS, API_LINK_IRQ};
+#ifdef API_DUST_CONFIGURED
+    const int dustPins[4] = {API_DUST0_LED_PIN, API_DUST0_ANALOG_PIN,
+                            API_DUST1_LED_PIN, API_DUST1_ANALOG_PIN};
+#endif
 #ifdef API_DHT_CONFIGURED
     const int dhtPins[3] = {API_DHT0_PIN, API_DHT1_PIN, API_DHT2_PIN};
 #endif
@@ -58,6 +71,9 @@ class BoardIO : public hardware_api::SensorHardware {
       for (uint8_t j = 0; j < i; ++j) if (bmpPins[i] == bmpPins[j]) validBmp = false;
       for (uint8_t j = 0; j < 5; ++j) if (bmpPins[i] == transport[j]) validBmp = false;
       for (uint8_t j = 0; j < 2; ++j) if (bmpPins[i] == pins[j]) validBmp = false;
+#ifdef API_DUST_CONFIGURED
+      for (uint8_t j = 0; j < 4; ++j) if (bmpPins[i] == dustPins[j]) validBmp = false;
+#endif
 #ifdef API_VOC_CONFIGURED
       for (uint8_t j = 0; j < 4; ++j) if (bmpPins[i] == vocPins[j]) validBmp = false;
 #endif
@@ -79,6 +95,9 @@ class BoardIO : public hardware_api::SensorHardware {
       for (uint8_t j = 0; j < i; ++j) if (vocPins[i] == vocPins[j]) validVoc = false;
       for (uint8_t j = 0; j < 5; ++j) if (vocPins[i] == transport[j]) validVoc = false;
       for (uint8_t j = 0; j < 2; ++j) if (vocPins[i] == pins[j]) validVoc = false;
+#ifdef API_DUST_CONFIGURED
+      for (uint8_t j = 0; j < 4; ++j) if (vocPins[i] == dustPins[j]) validVoc = false;
+#endif
 #ifdef API_BMP_CONFIGURED
       for (uint8_t j = 0; j < 4; ++j) if (vocPins[i] == bmpPins[j]) validVoc = false;
 #endif
@@ -100,6 +119,9 @@ class BoardIO : public hardware_api::SensorHardware {
       for (uint8_t j = 0; j < i; ++j) if (dhtPins[i] == dhtPins[j]) validDht = false;
       for (uint8_t j = 0; j < 5; ++j) if (dhtPins[i] == transport[j]) validDht = false;
       for (uint8_t j = 0; j < 2; ++j) if (dhtPins[i] == pins[j]) validDht = false;
+#ifdef API_DUST_CONFIGURED
+      for (uint8_t j = 0; j < 4; ++j) if (dhtPins[i] == dustPins[j]) validDht = false;
+#endif
 #ifdef API_BMP_CONFIGURED
       for (uint8_t j = 0; j < 4; ++j) if (dhtPins[i] == bmpPins[j]) validDht = false;
 #endif
@@ -112,12 +134,38 @@ class BoardIO : public hardware_api::SensorHardware {
       dhtReady_ = true;
     }
 #endif
+#ifdef API_DUST_CONFIGURED
+    bool validDust = true;
+    for (uint8_t i = 0; i < 4; ++i) {
+      if (dustPins[i] < 0 || dustPins[i] >= NUM_DIGITAL_PINS) validDust = false;
+      if ((i == 1 || i == 3) && (dustPins[i] < A0 || dustPins[i] >= A0 + NUM_ANALOG_INPUTS)) validDust = false;
+      for (uint8_t j = 0; j < i; ++j) if (dustPins[i] == dustPins[j]) validDust = false;
+      for (uint8_t j = 0; j < 5; ++j) if (dustPins[i] == transport[j]) validDust = false;
+      for (uint8_t j = 0; j < 2; ++j) if (dustPins[i] == pins[j]) validDust = false;
+#ifdef API_BMP_CONFIGURED
+      for (uint8_t j = 0; j < 4; ++j) if (dustPins[i] == bmpPins[j]) validDust = false;
+#endif
+#ifdef API_VOC_CONFIGURED
+      for (uint8_t j = 0; j < 4; ++j) if (dustPins[i] == vocPins[j]) validDust = false;
+#endif
+#ifdef API_DHT_CONFIGURED
+      for (uint8_t j = 0; j < 3; ++j) if (dustPins[i] == dhtPins[j]) validDust = false;
+#endif
+    }
+    if (validDust) {
+      for (uint8_t i = 0; i < 2; ++i) dust_[i].attach(dustReaders_[i], API_DUST_REFERENCE_MV, millis());
+      dustReady_ = true;
+    }
+#endif
     if (pins[0] < 0 || pins[1] < 0 || pins[0] == pins[1]) return;
     if ((API_DOOR0_CLOSED_LEVEL != LOW && API_DOOR0_CLOSED_LEVEL != HIGH) ||
         (API_DOOR1_CLOSED_LEVEL != LOW && API_DOOR1_CLOSED_LEVEL != HIGH)) return;
     for (uint8_t i = 0; i < 2; ++i) {
       if (pins[i] >= NUM_DIGITAL_PINS) return;
       for (uint8_t j = 0; j < 5; ++j) if (pins[i] == transport[j]) return;
+#ifdef API_DUST_CONFIGURED
+      for (uint8_t j = 0; j < 4; ++j) if (pins[i] == dustPins[j]) return;
+#endif
 #ifdef API_BMP_CONFIGURED
       for (uint8_t j = 0; j < 4; ++j) if (pins[i] == bmpPins[j]) return;
 #endif
@@ -133,14 +181,16 @@ class BoardIO : public hardware_api::SensorHardware {
     doorsReady_ = true;
   }
   void poll(uint32_t now) {
-    // Один из восьми датчиков за idle-итерацию. Чтение DHT синхронное,
+    // Один из десяти датчиков за idle-итерацию. Чтение DHT синхронное,
     // с коротким отключением прерываний; API всегда берёт кэш без GPIO.
     if (nextSensor_ < 3) {
       if (bmpReady_) bmp_[nextSensor_].poll(now);
     } else if (nextSensor_ < 5) {
       if (vocReady_) voc_[nextSensor_ - 3].poll(now);
-    } else if (dhtReady_) dht_[nextSensor_ - 5].poll(now);
-    nextSensor_ = static_cast<uint8_t>((nextSensor_ + 1) % 8);
+    } else if (nextSensor_ < 8) {
+      if (dhtReady_) dht_[nextSensor_ - 5].poll(now);
+    } else if (dustReady_) dust_[nextSensor_ - 8].poll(now);
+    nextSensor_ = static_cast<uint8_t>((nextSensor_ + 1) % 10);
   }
   hardware_api::Status temperature(uint8_t idx, hardware_api::Measurement& result) override {
     if (idx >= 3) return hardware_api::INVALID_INDEX;
@@ -160,8 +210,17 @@ class BoardIO : public hardware_api::SensorHardware {
     closed = doors_[idx].closed();
     return hardware_api::OK;
   }
+  hardware_api::Status dust(uint8_t idx, hardware_api::Measurement& result) override {
+    if (idx >= 2) return hardware_api::INVALID_INDEX;
+    if (!dustReady_) return hardware_api::NOT_IMPLEMENTED;
+    const GP2Y1010AU0F::Reading reading = dust_[idx].read(millis());
+    if (!reading.valid) return hardware_api::SENSOR_UNAVAILABLE;
+    result.value = (static_cast<uint32_t>(reading.adc) << 16) | reading.millivolts;
+    result.flags = reading.fresh ? 3 : 1; result.ageMs = reading.ageMs;
+    return hardware_api::OK;
+  }
   hardware_api::Status unsupported(uint8_t, uint8_t) override {
-    // Пыль GP2Y1010AU0F: единицы/калибровка и драйвер пока не реализованы.
+    // Только неизвестные расширения API.
     return hardware_api::NOT_IMPLEMENTED;
   }
   hardware_api::Status voc(uint8_t idx, hardware_api::Measurement& result) override {
@@ -203,8 +262,12 @@ class BoardIO : public hardware_api::SensorHardware {
   SGP40 voc_[2];
   DHT11 dht_[3];
   DoorSwitch doors_[2];
-  bool doorsReady_, bmpReady_, vocReady_, dhtReady_;
+  GP2Y1010AU0F dust_[2];
+  bool doorsReady_, bmpReady_, vocReady_, dhtReady_, dustReady_;
   uint8_t nextSensor_;
+#ifdef API_DUST_CONFIGURED
+  GP2Y1010Hardware dustReaders_[2];
+#endif
 #ifdef API_BMP_CONFIGURED
   BMP280SoftwareBus buses_[3];
 #endif

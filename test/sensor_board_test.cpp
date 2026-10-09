@@ -80,8 +80,13 @@ int main() {
   assert(board.temperature(0,value)==hardware_api::NOT_IMPLEMENTED);
   assert(board.humidity(0,value)==hardware_api::NOT_IMPLEMENTED);
 #elif defined(TEST_UNO_MAP)
-  assert(API_LINK_MISO == A2 && API_LINK_MOSI == A3);
-  assert(API_LINK_CLK == A4 && API_LINK_CS == A5 && API_LINK_IRQ == 13);
+  assert(API_LINK_MISO == 9 && API_LINK_MOSI == 10);
+  assert(API_LINK_CLK == 11 && API_LINK_CS == 12 && API_LINK_IRQ == 13);
+  assert(API_DHT0_PIN == A2 && API_DHT1_PIN == A3 && API_DHT2_PIN == A4);
+  assert(API_VOC0_SDA_PIN == 7 && API_VOC1_SDA_PIN == 8);
+  assert(API_VOC0_SCL_PIN == 6 && API_VOC1_SCL_PIN == 6);
+  assert(API_DUST0_LED_PIN == A5 && API_DUST1_LED_PIN == A5);
+  assert(API_DUST0_ANALOG_PIN == A0 && API_DUST1_ANALOG_PIN == A1);
   assert(busBegins == 5 && dhtBegins == 3 && gpioCalls == 4);
   assert(board.temperature(0,value) == hardware_api::SENSOR_UNAVAILABLE);
   for(timeNow=0;timeNow<49000;++timeNow) {

@@ -5,11 +5,11 @@
 #ifdef HARDWARE_API_BOARD_HEADER
 #include HARDWARE_API_BOARD_HEADER
 #else
-// Согласованная карта Arduino Uno. A2–A5 используются как цифровые GPIO.
-#define API_LINK_MISO A2
-#define API_LINK_MOSI A3
-#define API_LINK_CLK A4
-#define API_LINK_CS A5
+// Согласованная карта Arduino Uno. A2–A5 — цифровые GPIO датчиков.
+#define API_LINK_MISO 9
+#define API_LINK_MOSI 10
+#define API_LINK_CLK 11
+#define API_LINK_CS 12
 #define API_LINK_IRQ 13
 #define API_BMP_SCL_PIN 2
 #define API_BMP_SDA0_PIN 3
@@ -18,12 +18,12 @@
 #define API_VOC0_SCL_PIN 6
 #define API_VOC1_SCL_PIN 6
 #define API_VOC0_SDA_PIN 7
-#define API_VOC1_SDA_PIN 12
-#define API_DHT0_PIN 8
-#define API_DHT1_PIN 9
-#define API_DHT2_PIN 10
-#define API_DUST0_LED_PIN 11
-#define API_DUST1_LED_PIN 11
+#define API_VOC1_SDA_PIN 8
+#define API_DHT0_PIN A2
+#define API_DHT1_PIN A3
+#define API_DHT2_PIN A4
+#define API_DUST0_LED_PIN A5
+#define API_DUST1_LED_PIN A5
 #define API_DUST0_ANALOG_PIN A0
 #define API_DUST1_ANALOG_PIN A1
 // Концевики перенесены на кнопочницу МС-ТЮК; D0/D1 остаются для Serial.

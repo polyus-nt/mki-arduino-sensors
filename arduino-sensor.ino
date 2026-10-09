@@ -13,7 +13,8 @@ uint16_t lastOverruns = 0;
 bool linkReady = false;
 #ifdef TEST
 #include "src/SensorDiagnostics.h"
-hardware_api::StreamParser serialParser;
+#include "src/SensorTestInput.h"
+SensorTestInput serialInput;
 #endif
 
 void setup() {
@@ -22,7 +23,7 @@ void setup() {
   board.setup();
   linkReady = link.setup();
 #ifdef TEST
-  Serial.println(F("TEST: send binary Hardware API v2 frames; replies are text + TX HEX."));
+  printSensorHelp(Serial);
 #endif
 }
 
@@ -31,12 +32,15 @@ void loop() {
 #ifdef TEST
   // Отдельный парсер: фрагменты Serial и Austere никогда не смешиваются.
   // Один байт за итерацию, чтобы не вытеснять аппаратный транспорт/опрос.
-  serialParser.tick(millis());
+  serialInput.tick(millis());
   if (Serial.available() > 0) {
     hardware_api::Frame serialRequest;
-    if (serialParser.feed(static_cast<uint8_t>(Serial.read()), millis(), serialRequest) &&
-        serialRequest.kind == hardware_api::kRequest)
+    const SensorTestInput::Event event=serialInput.feed(static_cast<uint8_t>(Serial.read()), millis(), serialRequest);
+    if (event==SensorTestInput::REQUEST)
       printSensorReply(Serial, api.handle(serialRequest));
+    else if (event==SensorTestInput::HELP) printSensorHelp(Serial);
+    else if (event==SensorTestInput::ERROR)
+      Serial.println(F("Invalid command/frame. Type help; check index and CRC for binary input."));
   }
 #endif
   parser.tick(millis());

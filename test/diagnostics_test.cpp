@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include "../src/SensorDiagnostics.h"
+#include "../src/SensorTestInput.h"
 struct Output {
   std::ostringstream text;
   template<class T> void print(T v) { text << v; }
@@ -44,4 +45,42 @@ int main() {
   Output error; printSensorReply(error,reply);
   assert(error.text.str().find("Temperature:")==std::string::npos);
   assert(error.text.str().find("status=5")!=std::string::npos);
+  SensorTestInput input;
+  uint32_t now=0;
+  const auto line=[&](const std::string& command) {
+    SensorTestInput::Event event=SensorTestInput::NONE;
+    for(unsigned char ch:command) event=input.feed(ch,now++,received);
+    return event;
+  };
+  for(const auto& item : {std::make_pair("temp 2\n",kGetTemp),
+                         std::make_pair("pressure 0\n",kGetPressure),
+                         std::make_pair("voc 1\n",kGetVoc),
+                         std::make_pair("humidity 2\n",kGetHumidity),
+                         std::make_pair("dust 1\n",kGetDust)}) {
+    assert(line(item.first)==SensorTestInput::REQUEST);
+    assert(received.command==item.second);
+    assert(validateRequest(received,kSensorsNode)==OK);
+    assert(received.tx_id==1 && received.session_id==1);
+  }
+  assert(line("  temp\t0  \r")==SensorTestInput::REQUEST && received.idx==0);
+  assert(line("\n")==SensorTestInput::NONE);
+  assert(line("help\n")==SensorTestInput::HELP);
+  for(const char* bad : {"temp\n","dust 2\n","voc -1\n","pressure 3\n",
+                        "temp 0 junk\n","help 0\n","pwm 0\n","temp 99999999999\n"})
+    assert(line(bad)==SensorTestInput::ERROR);
+  assert(line(std::string(80,'x')+"\n")==SensorTestInput::ERROR);
+  assert(line("dust 0\n")==SensorTestInput::REQUEST);
+  line("tem"); now+=5000;
+  assert(line("voc 0\n")==SensorTestInput::REQUEST);
+  request.session_id=UINT64_C(0xA55A0D0A12345678); encode(request,wire);
+  for(unsigned i=0;i<kFrameSize;++i)
+    assert(input.feed(wire[i],now++,received)==(i==kFrameSize-1 ? SensorTestInput::REQUEST : SensorTestInput::NONE));
+  assert(received.session_id==request.session_id && received.command==kGetDust);
+  wire[27]^=1;
+  for(unsigned i=0;i<kFrameSize;++i)
+    assert(input.feed(wire[i],now++,received)==(i==kFrameSize-1 ? SensorTestInput::ERROR : SensorTestInput::NONE));
+  input.feed(0xa5,now++,received); now+=250;
+  assert(line("help\n")==SensorTestInput::HELP);
+  Output help; printSensorHelp(help);
+  assert(help.text.str().find("humidity 0..2")!=std::string::npos);
 }

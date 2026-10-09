@@ -2,6 +2,14 @@
 #include <Arduino.h>
 #include "common/HardwareProtocol.h"
 
+template<class Output>
+void printSensorHelp(Output& out) {
+  out.println(F("TEST commands (finish with Enter / Newline):"));
+  out.println(F("temp 0..2 | pressure 0..2 | voc 0..1"));
+  out.println(F("humidity 0..2 | dust 0..1 | help"));
+  out.println(F("9600 baud. Binary v2 requests are also accepted."));
+}
+
 // Только диагностика: расшифровываем уже сформированный ответ, не читаем
 // датчик повторно и не меняем valid/fresh. HEX — точные 28 байтов с CRC.
 template<class Output>

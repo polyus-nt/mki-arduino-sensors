@@ -1,7 +1,32 @@
 #pragma once
 #include <Arduino.h>
+// Раскомментировать для диагностики через Serial (9600 бод).
+// #define TEST
 #ifdef HARDWARE_API_BOARD_HEADER
 #include HARDWARE_API_BOARD_HEADER
+#else
+// Согласованная карта Arduino Uno. A2–A5 используются как цифровые GPIO.
+#define API_LINK_MISO A2
+#define API_LINK_MOSI A3
+#define API_LINK_CLK A4
+#define API_LINK_CS A5
+#define API_LINK_IRQ 13
+#define API_BMP_SCL_PIN 2
+#define API_BMP_SDA0_PIN 3
+#define API_BMP_SDA1_PIN 4
+#define API_BMP_SDA2_PIN 5
+#define API_VOC0_SCL_PIN 6
+#define API_VOC1_SCL_PIN 6
+#define API_VOC0_SDA_PIN 7
+#define API_VOC1_SDA_PIN 12
+#define API_DHT0_PIN 8
+#define API_DHT1_PIN 9
+#define API_DHT2_PIN 10
+#define API_DUST0_LED_PIN 11
+#define API_DUST1_LED_PIN 11
+#define API_DUST0_ANALOG_PIN A0
+#define API_DUST1_ANALOG_PIN A1
+// Концевики перенесены на кнопочницу МС-ТЮК; D0/D1 остаются для Serial.
 #endif
 // Единственное место настройки распиновки, видимое вкладкой Arduino IDE.
 // Внешняя карта выше используется для compile-only проверок; пины остаются
@@ -20,8 +45,6 @@
 #endif
 // BMP280 x3: общий SCL, три отдельные SDA, адрес каждого 0x76.
 // SoftwareWire с исправленным тайм-аутом находится в src/softwarewire.
-// Пример пользователя SCL=D2, SDA=D3/D4/D5 конфликтует с Austere!
-// Реальная разводка НЕ утверждена, поэтому группа по умолчанию выключена.
 // #define API_BMP_SCL_PIN 2
 // #define API_BMP_SDA0_PIN 3
 // #define API_BMP_SDA1_PIN 4
@@ -32,9 +55,7 @@
 #endif
 #define API_BMP_CONFIGURED
 #endif
-// SGP40 x2: две отдельные пары SDA/SCL, все четыре пина уникальны.
-// Пример пользователя SDA=D7, SCL=D6 конфликтует с Austere IRQ=D6!
-// НЕ включайте пример без согласования общей карты.
+// SGP40 x2: отдельные SDA; разрешён общий SCL. Обмен последовательный.
 // #define API_VOC0_SDA_PIN ...
 // #define API_VOC0_SCL_PIN ...
 // #define API_VOC1_SDA_PIN ...
@@ -47,7 +68,7 @@
 #endif
 // Концевики: два отдельных входа, INPUT_PULLUP. -1 означает отключённый вход;
 // уровень CLOSED_LEVEL задаётся по физическому монтажу (LOW либо HIGH).
-// Все пины датчиков уникальны и не пересекаются с Austere.
+// Входы концевиков не могут пересекаться с датчиками и Austere.
 // #define API_DOOR0_PIN ...
 // #define API_DOOR1_PIN ...
 // #define API_DOOR0_CLOSED_LEVEL LOW
@@ -64,8 +85,7 @@
 #ifndef API_DOOR1_CLOSED_LEVEL
 #define API_DOOR1_CLOSED_LEVEL LOW
 #endif
-// DHT11 x3: пины из примера 8/9/10 НЕ включены автоматически — в тестовой
-// карте SGP40 они уже заняты. Каждый вход уникален во всей карте.
+// DHT11 x3: каждый вход уникален во всей карте.
 // #define API_DHT0_PIN 8
 // #define API_DHT1_PIN 9
 // #define API_DHT2_PIN 10
@@ -76,7 +96,7 @@
 #define API_DHT_CONFIGURED
 #endif
 // GP2Y1010AU0F x2: для каждого LED active LOW и аналоговый вход.
-// D2 из примера занят Austere! Карта по умолчанию выключена.
+// Разрешён общий LED; аналоговые входы остаются отдельными.
 // #define API_DUST0_LED_PIN ...
 // #define API_DUST0_ANALOG_PIN A0
 // #define API_DUST1_LED_PIN ...

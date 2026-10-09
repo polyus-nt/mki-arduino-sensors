@@ -11,16 +11,34 @@ hardware_api::StreamParser parser;
 hardware_api::ReplyBuffer replies;
 uint16_t lastOverruns = 0;
 bool linkReady = false;
+#ifdef TEST
+#include "src/SensorDiagnostics.h"
+hardware_api::StreamParser serialParser;
+#endif
 
 void setup() {
   Serial.begin(9600);
   if (!validLinkPins()) { Serial.println(F("invalid Austere pin map")); return; }
   board.setup();
   linkReady = link.setup();
+#ifdef TEST
+  Serial.println(F("TEST: send binary Hardware API v2 frames; replies are text + TX HEX."));
+#endif
 }
 
 void loop() {
   if (!linkReady) return;
+#ifdef TEST
+  // Отдельный парсер: фрагменты Serial и Austere никогда не смешиваются.
+  // Один байт за итерацию, чтобы не вытеснять аппаратный транспорт/опрос.
+  serialParser.tick(millis());
+  if (Serial.available() > 0) {
+    hardware_api::Frame serialRequest;
+    if (serialParser.feed(static_cast<uint8_t>(Serial.read()), millis(), serialRequest) &&
+        serialRequest.kind == hardware_api::kRequest)
+      printSensorReply(Serial, api.handle(serialRequest));
+  }
+#endif
   parser.tick(millis());
   if (link.overrunCount() != lastOverruns) {
     lastOverruns = link.overrunCount(); parser.reset(); link.clearRx();

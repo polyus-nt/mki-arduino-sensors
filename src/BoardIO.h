@@ -92,7 +92,9 @@ class BoardIO : public hardware_api::SensorHardware {
     bool validVoc = true;
     for (uint8_t i = 0; i < 4; ++i) {
       if (vocPins[i] < 0 || vocPins[i] >= NUM_DIGITAL_PINS) validVoc = false;
-      for (uint8_t j = 0; j < i; ++j) if (vocPins[i] == vocPins[j]) validVoc = false;
+      // Только два SCL могут совпадать: SDA и все остальные роли уникальны.
+      for (uint8_t j = 0; j < i; ++j)
+        if (vocPins[i] == vocPins[j] && !(i == 3 && j == 1)) validVoc = false;
       for (uint8_t j = 0; j < 5; ++j) if (vocPins[i] == transport[j]) validVoc = false;
       for (uint8_t j = 0; j < 2; ++j) if (vocPins[i] == pins[j]) validVoc = false;
 #ifdef API_DUST_CONFIGURED
@@ -139,7 +141,9 @@ class BoardIO : public hardware_api::SensorHardware {
     for (uint8_t i = 0; i < 4; ++i) {
       if (dustPins[i] < 0 || dustPins[i] >= NUM_DIGITAL_PINS) validDust = false;
       if ((i == 1 || i == 3) && (dustPins[i] < A0 || dustPins[i] >= A0 + NUM_ANALOG_INPUTS)) validDust = false;
-      for (uint8_t j = 0; j < i; ++j) if (dustPins[i] == dustPins[j]) validDust = false;
+      // Общий LED допустим; LED/ADC и два ADC не могут совпадать.
+      for (uint8_t j = 0; j < i; ++j)
+        if (dustPins[i] == dustPins[j] && !(i == 2 && j == 0)) validDust = false;
       for (uint8_t j = 0; j < 5; ++j) if (dustPins[i] == transport[j]) validDust = false;
       for (uint8_t j = 0; j < 2; ++j) if (dustPins[i] == pins[j]) validDust = false;
 #ifdef API_BMP_CONFIGURED
@@ -265,9 +269,6 @@ class BoardIO : public hardware_api::SensorHardware {
   GP2Y1010AU0F dust_[2];
   bool doorsReady_, bmpReady_, vocReady_, dhtReady_, dustReady_;
   uint8_t nextSensor_;
-#ifdef API_DUST_CONFIGURED
-  GP2Y1010Hardware dustReaders_[2];
-#endif
 #ifdef API_BMP_CONFIGURED
   BMP280SoftwareBus buses_[3];
 #endif
@@ -276,5 +277,8 @@ class BoardIO : public hardware_api::SensorHardware {
 #endif
 #ifdef API_DHT_CONFIGURED
   DHT11Hardware dhtReaders_[3];
+#endif
+#ifdef API_DUST_CONFIGURED
+  GP2Y1010Hardware dustReaders_[2];
 #endif
 };

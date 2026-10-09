@@ -5,6 +5,13 @@
 #define HIGH 1
 #define INPUT_PULLUP 2
 #define NUM_DIGITAL_PINS 20
+#define NUM_ANALOG_INPUTS 6
+#define A0 14
+#define A1 15
+#define A2 16
+#define A3 17
+#define A4 18
+#define A5 19
 static uint32_t timeNow=0;
 unsigned long millis() {return timeNow;}
 static unsigned gpioCalls=0;
@@ -13,6 +20,9 @@ int digitalRead(int pin) {return pin == 11 ? LOW : HIGH;}
 // Подменяем только электрический транспорт: production BoardIO и драйверы настоящие.
 #define SoftwareWire_h
 static unsigned busBegins=0, operations=0;
+void digitalWrite(int, int) {}
+void delayMicroseconds(unsigned int) {}
+int analogRead(int pin) { ++operations; return pin == A0 ? 512 : 1023; }
 // Подменяем DHT только на электрической границе. Кэш/период DHT11 настоящие.
 #define DHT_H
 static const uint8_t DHT_TYPE_11 = 11;
@@ -69,6 +79,23 @@ int main() {
   assert(board.voc(0,value)==hardware_api::NOT_IMPLEMENTED);
   assert(board.temperature(0,value)==hardware_api::NOT_IMPLEMENTED);
   assert(board.humidity(0,value)==hardware_api::NOT_IMPLEMENTED);
+#elif defined(TEST_UNO_MAP)
+  assert(API_LINK_MISO == A2 && API_LINK_MOSI == A3);
+  assert(API_LINK_CLK == A4 && API_LINK_CS == A5 && API_LINK_IRQ == 13);
+  assert(busBegins == 5 && dhtBegins == 3 && gpioCalls == 4);
+  assert(board.temperature(0,value) == hardware_api::SENSOR_UNAVAILABLE);
+  for(timeNow=0;timeNow<49000;++timeNow) {
+    unsigned before=operations; board.poll(timeNow);
+    assert(operations-before<=1);
+  }
+  assert(board.voc(0,value)==hardware_api::OK);
+  assert(board.voc(1,value)==hardware_api::OK);
+  assert(board.humidity(0,value)==hardware_api::OK);
+  assert(board.dust(0,value)==hardware_api::OK && value.value==((512UL<<16)|2502));
+  assert(board.dust(1,value)==hardware_api::OK && value.value==((1023UL<<16)|5000));
+  bool closed=false;
+  assert(board.door(0,closed)==hardware_api::NOT_IMPLEMENTED);
+  assert(board.door(1,closed)==hardware_api::NOT_IMPLEMENTED);
 #else
   assert(busBegins==5 && gpioCalls==2);
 #if defined(API_DHT_CONFIGURED) && !defined(TEST_DHT_CONFLICT)

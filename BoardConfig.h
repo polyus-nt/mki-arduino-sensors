@@ -19,11 +19,11 @@
 #define API_VOC1_SCL_PIN 6
 #define API_VOC0_SDA_PIN 7
 #define API_VOC1_SDA_PIN 8
-#define API_DHT0_PIN A2
-#define API_DHT1_PIN A3
-#define API_DHT2_PIN A4
-#define API_DUST0_LED_PIN A5
-#define API_DUST1_LED_PIN A5
+#define API_DHT0_PIN A3
+#define API_DHT1_PIN A4
+#define API_DHT2_PIN A5
+#define API_DUST0_LED_PIN A2
+#define API_DUST1_LED_PIN A2
 #define API_DUST0_ANALOG_PIN A0
 #define API_DUST1_ANALOG_PIN A1
 // Концевики перенесены на кнопочницу МС-ТЮК; D0/D1 остаются для Serial.

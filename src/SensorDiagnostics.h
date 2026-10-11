@@ -6,7 +6,7 @@ template<class Output>
 void printSensorHelp(Output& out) {
   out.println(F("TEST commands (finish with Enter / Newline):"));
   out.println(F("temp 0..2 | pressure 0..2 | voc 0..1"));
-  out.println(F("humidity 0..2 | dust 0..1 | help"));
+  out.println(F("humidity 0..2 | dust | help"));
   out.println(F("9600 baud. Binary v2 requests are also accepted."));
 }
 
@@ -16,7 +16,7 @@ template<class Output>
 void printSensorReply(Output& out, const hardware_api::Frame& reply) {
   using namespace hardware_api;
   out.print(F("RX command=0x")); out.print(reply.command, HEX);
-  out.print(F(" idx=")); out.print(reply.idx);
+  if (reply.command != hardware_api::kGetDust) { out.print(F(" idx=")); out.print(reply.idx); }
   out.print(F(" tx=")); out.print(reply.tx_id);
   out.print(F(" status=")); out.println(reply.status);
   if (reply.status == OK) {

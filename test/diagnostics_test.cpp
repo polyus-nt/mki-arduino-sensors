@@ -18,7 +18,7 @@ struct Output {
 int main() {
   using namespace hardware_api;
   Frame request = {}; request.version=kVersion; request.kind=kRequest;
-  request.node=kSensorsNode; request.command=kGetDust; request.idx=1;
+  request.node=kSensorsNode; request.command=kGetDust; request.idx=0;
   request.tx_id=1; request.session_id=UINT64_C(0x123456789abcdef0);
   uint8_t wire[kFrameSize]; encode(request,wire);
   StreamParser parser; Frame received={};
@@ -56,7 +56,7 @@ int main() {
                          std::make_pair("pressure 0\n",kGetPressure),
                          std::make_pair("voc 1\n",kGetVoc),
                          std::make_pair("humidity 2\n",kGetHumidity),
-                         std::make_pair("dust 1\n",kGetDust)}) {
+                         std::make_pair("dust\n",kGetDust)}) {
     assert(line(item.first)==SensorTestInput::REQUEST);
     assert(received.command==item.second);
     assert(validateRequest(received,kSensorsNode)==OK);
@@ -65,11 +65,11 @@ int main() {
   assert(line("  temp\t0  \r")==SensorTestInput::REQUEST && received.idx==0);
   assert(line("\n")==SensorTestInput::NONE);
   assert(line("help\n")==SensorTestInput::HELP);
-  for(const char* bad : {"temp\n","dust 2\n","voc -1\n","pressure 3\n",
+  for(const char* bad : {"temp\n","dust 0\n","dust 1\n","dust 2\n","voc -1\n","pressure 3\n",
                         "temp 0 junk\n","help 0\n","pwm 0\n","temp 99999999999\n"})
     assert(line(bad)==SensorTestInput::ERROR);
   assert(line(std::string(80,'x')+"\n")==SensorTestInput::ERROR);
-  assert(line("dust 0\n")==SensorTestInput::REQUEST);
+  assert(line("dust\n")==SensorTestInput::REQUEST);
   line("tem"); now+=5000;
   assert(line("voc 0\n")==SensorTestInput::REQUEST);
   request.session_id=UINT64_C(0xA55A0D0A12345678); encode(request,wire);

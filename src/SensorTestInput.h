@@ -59,9 +59,9 @@ class SensorTestInput {
     else if (SENSOR_TEST_MATCH(name,"pressure")) { command=kGetPressure; count=3; }
     else if (SENSOR_TEST_MATCH(name,"voc")) { command=kGetVoc; count=2; }
     else if (SENSOR_TEST_MATCH(name,"humidity")) { command=kGetHumidity; count=3; }
-    else if (SENSOR_TEST_MATCH(name,"dust")) { command=kGetDust; count=2; }
+    else if (SENSOR_TEST_MATCH(name,"dust")) { command=kGetDust; count=1; }
     else return ERROR;
-    if (*arg<'0' || *arg>'9') return ERROR;
+    if (command == kGetDust ? *arg != '\0' : (*arg<'0' || *arg>'9')) return ERROR;
     uint16_t idx=0;
     while (*arg>='0' && *arg<='9') {
       idx=idx*10+static_cast<uint8_t>(*arg++-'0');

@@ -23,9 +23,7 @@
 #define API_DHT1_PIN A4
 #define API_DHT2_PIN A5
 #define API_DUST0_LED_PIN A2
-#define API_DUST1_LED_PIN A2
-#define API_DUST0_ANALOG_PIN A0
-#define API_DUST1_ANALOG_PIN A1
+#define API_DUST0_ANALOG_PIN A1
 // Концевики перенесены на кнопочницу МС-ТЮК; D0/D1 остаются для Serial.
 #endif
 // Единственное место настройки распиновки, видимое вкладкой Arduino IDE.
@@ -95,21 +93,18 @@
 #endif
 #define API_DHT_CONFIGURED
 #endif
-// GP2Y1010AU0F x2: для каждого LED active LOW и аналоговый вход.
-// Разрешён общий LED; аналоговые входы остаются отдельными.
-// #define API_DUST0_LED_PIN ...
-// #define API_DUST0_ANALOG_PIN A0
-// #define API_DUST1_LED_PIN ...
-// #define API_DUST1_ANALOG_PIN A1
+// GP2Y1010AU0F x1: LED active LOW на A2, аналоговый сигнал на A1.
+// #define API_DUST0_LED_PIN A2
+// #define API_DUST0_ANALOG_PIN A1
 #ifndef API_DUST_REFERENCE_MV
 #define API_DUST_REFERENCE_MV 5000
 #endif
 #if API_DUST_REFERENCE_MV < 1 || API_DUST_REFERENCE_MV > 65535
 #error "ADC reference must be 1..65535 millivolts"
 #endif
-#if defined(API_DUST0_LED_PIN) || defined(API_DUST0_ANALOG_PIN) || defined(API_DUST1_LED_PIN) || defined(API_DUST1_ANALOG_PIN)
-#if !defined(API_DUST0_LED_PIN) || !defined(API_DUST0_ANALOG_PIN) || !defined(API_DUST1_LED_PIN) || !defined(API_DUST1_ANALOG_PIN)
-#error "define all four GP2Y1010AU0F pins"
+#if defined(API_DUST0_LED_PIN) || defined(API_DUST0_ANALOG_PIN)
+#if !defined(API_DUST0_LED_PIN) || !defined(API_DUST0_ANALOG_PIN)
+#error "define both GP2Y1010AU0F pins"
 #endif
 #define API_DUST_CONFIGURED
 #endif

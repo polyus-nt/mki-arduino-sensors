@@ -18,7 +18,7 @@ class SensorHardware {
   // Влажность DHT11: unsigned u32 в сотых процента RH (0..10000).
   virtual Status humidity(uint8_t, Measurement&) { return NOT_IMPLEMENTED; }
   // Пыль: старшие 16 бит value — ADC, младшие — мВ, без концентрации.
-  virtual Status dust(uint8_t, Measurement&) { return NOT_IMPLEMENTED; }
+  virtual Status dust(Measurement&) { return NOT_IMPLEMENTED; }
   virtual Status unsupported(uint8_t command, uint8_t idx) = 0;
 };
 class SensorApi {
@@ -41,7 +41,7 @@ class SensorApi {
           : request.command == kGetPressure ? hardware_.pressure(request.idx, measurement)
           : request.command == kGetVoc ? hardware_.voc(request.idx, measurement)
           : request.command == kGetHumidity ? hardware_.humidity(request.idx, measurement)
-          : hardware_.dust(request.idx, measurement);
+          : hardware_.dust(measurement);
       if (status == OK) {
         // Ноль blackout и raw/ppm не должны попасть в успешный ответ GET_VOC.
         if (request.command == kGetVoc && (measurement.value < 1 || measurement.value > 500))

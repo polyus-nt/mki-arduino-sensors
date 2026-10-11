@@ -85,9 +85,9 @@ int main() {
   assert(API_DHT0_PIN == A3 && API_DHT1_PIN == A4 && API_DHT2_PIN == A5);
   assert(API_VOC0_SDA_PIN == 7 && API_VOC1_SDA_PIN == 8);
   assert(API_VOC0_SCL_PIN == 6 && API_VOC1_SCL_PIN == 6);
-  assert(API_DUST0_LED_PIN == A2 && API_DUST1_LED_PIN == A2);
-  assert(API_DUST0_ANALOG_PIN == A0 && API_DUST1_ANALOG_PIN == A1);
-  assert(busBegins == 5 && dhtBegins == 3 && gpioCalls == 4);
+  assert(API_DUST0_LED_PIN == A2);
+  assert(API_DUST0_ANALOG_PIN == A1);
+  assert(busBegins == 5 && dhtBegins == 3 && gpioCalls == 2);
   assert(board.temperature(0,value) == hardware_api::SENSOR_UNAVAILABLE);
   for(timeNow=0;timeNow<49000;++timeNow) {
     unsigned before=operations; board.poll(timeNow);
@@ -96,8 +96,7 @@ int main() {
   assert(board.voc(0,value)==hardware_api::OK);
   assert(board.voc(1,value)==hardware_api::OK);
   assert(board.humidity(0,value)==hardware_api::OK);
-  assert(board.dust(0,value)==hardware_api::OK && value.value==((512UL<<16)|2502));
-  assert(board.dust(1,value)==hardware_api::OK && value.value==((1023UL<<16)|5000));
+  assert(board.dust(value)==hardware_api::OK && value.value==((1023UL<<16)|5000));
   bool closed=false;
   assert(board.door(0,closed)==hardware_api::NOT_IMPLEMENTED);
   assert(board.door(1,closed)==hardware_api::NOT_IMPLEMENTED);

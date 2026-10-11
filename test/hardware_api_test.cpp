@@ -36,12 +36,12 @@ int main() {
   assert(api.handle(request(kGetDoor, 0)).data[0] == 1);
   assert(api.handle(request(kGetDoor, 1)).data[0] == 0);
   assert(api.handle(request(kGetVoc, 1)).status == NOT_IMPLEMENTED);
-  assert(api.handle(request(kGetDust, 1)).status == NOT_IMPLEMENTED);
+  assert(api.handle(request(kGetDust, 0)).status == NOT_IMPLEMENTED);
   unsigned reads = hardware.reads;
   assert(api.handle(request(kGetTemp, 3)).status == INVALID_INDEX);
   assert(api.handle(request(kGetHumidity, 3)).status == INVALID_INDEX);
   assert(api.handle(request(kGetDoor, 2)).status == INVALID_INDEX);
-  assert(api.handle(request(kGetDust, 2)).status == INVALID_INDEX);
+  assert(api.handle(request(kGetDust, 1)).status == INVALID_INDEX);
   Frame invalid = request(kGetTemp, 0); invalid.data[0] = 1;
   assert(api.handle(invalid).status == INVALID_ARGUMENT);
   assert(api.handle(request(kSetDoorLock, 0)).status == UNKNOWN_COMMAND);
